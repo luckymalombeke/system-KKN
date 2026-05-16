@@ -58,3 +58,25 @@ func (h *PesertaHandler) GetByID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"data": result})
 }
+
+func (h *PesertaHandler) UpdateStatus(c *gin.Context) {
+	idStr := c.Param("id")
+	id, _ := strconv.Atoi(idStr)
+
+	var input struct {
+		Status string `json:"status" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.service.UpdateStatus(uint(id), input.Status)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Status berhasil diperbarui"})
+}

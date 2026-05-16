@@ -1,0 +1,39 @@
+### Test Ping
+GET http://localhost:8081/ping
+
+### Register Peserta Baru
+POST http://localhost:8081/api/v1/peserta/register
+Content-Type: application/json
+
+{
+    "nama": " Lucky Malombeke",
+    "email": "lucky@example.com",
+    "nim": "2026001",
+    "prodi": "Teknik Informatika"
+}
+
+### Get Semua Peserta
+GET http://localhost:8081/api/v1/peserta/
+
+### Get Peserta By ID
+GET http://localhost:8081/api/v1/peserta/1
+
+### Update Status Peserta (Admin)
+PATCH http://localhost:8081/api/v1/peserta/1/status
+Content-Type: application/json
+
+{
+    "status": "approved"
+}
+
+### Buat Invoice Pembayaran
+POST http://localhost:8081/api/v1/pembayaran/invoice
+Content-Type: application/json
+
+{
+    "peserta_id": 1,
+    "amount": 500000
+}
+
+### Cek Status Pembayaran
+GET http://localhost:8081/api/v1/pembayaran/1

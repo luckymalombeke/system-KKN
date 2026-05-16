@@ -12,6 +12,7 @@ type PesertaRepository interface {
 	FindByID(id uint) (entity.Peserta, error)
 	FindByNIM(nim string) (entity.Peserta, error)
 	Update(peserta entity.Peserta) (entity.Peserta, error)
+	UpdateStatus(id uint, status string) error
 }
 
 type pesertaRepository struct {
@@ -48,4 +49,8 @@ func (r *pesertaRepository) FindByNIM(nim string) (entity.Peserta, error) {
 func (r *pesertaRepository) Update(peserta entity.Peserta) (entity.Peserta, error) {
 	err := r.db.Save(&peserta).Error
 	return peserta, err
+}
+
+func (r *pesertaRepository) UpdateStatus(id uint, status string) error {
+	return r.db.Model(&entity.Peserta{}).Where("id = ?", id).Update("status", status).Error
 }

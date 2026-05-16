@@ -21,7 +21,7 @@ func main() {
 	database.ConnectDB(cfg)
 
 	// 3. Auto Migration
-	err := database.DB.AutoMigrate(&entity.Peserta{})
+	err := database.DB.AutoMigrate(&entity.Peserta{}, &entity.Pembayaran{})
 	if err != nil {
 		log.Fatal("Migration failed:", err)
 	}
@@ -29,8 +29,13 @@ func main() {
 
 	// 4. Setup Layers (Dependency Injection)
 	pesertaRepo := repositories.NewPesertaRepository(database.DB)
+	pembayaranRepo := repositories.NewPembayaranRepository(database.DB)
+
 	pesertaService := services.NewPesertaService(pesertaRepo)
+	pembayaranService := services.NewPembayaranService(pembayaranRepo, pesertaRepo)
+
 	pesertaHandler := handlers.NewPesertaHandler(pesertaService)
+	pembayaranHandler := handlers.NewPembayaranHandler(pembayaranService)
 
 	// 5. Setup Router
 	r := gin.Default()
@@ -43,11 +48,20 @@ func main() {
 	// API Routes
 	api := r.Group("/api/v1")
 	{
+		// Peserta Routes
 		peserta := api.Group("/peserta")
 		{
 			peserta.POST("/register", pesertaHandler.Register)
 			peserta.GET("/", pesertaHandler.GetAll)
 			peserta.GET("/:id", pesertaHandler.GetByID)
+			peserta.PATCH("/:id/status", pesertaHandler.UpdateStatus)
+		}
+
+		// Pembayaran Routes
+		pembayaran := api.Group("/pembayaran")
+		{
+			pembayaran.POST("/invoice", pembayaranHandler.CreateInvoice)
+			pembayaran.GET("/:id", pembayaranHandler.GetByID)
 		}
 	}
 
