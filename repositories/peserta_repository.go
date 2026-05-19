@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"kkn-system/models/entity"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -13,6 +14,8 @@ type PesertaRepository interface {
 	FindByNIM(nim string) (entity.Peserta, error)
 	Update(peserta entity.Peserta) (entity.Peserta, error)
 	UpdateStatus(id uint, status string) error
+	AssignLocation(pesertaID uint, lokasiID uint) error
+	UpdateOTP(id uint, otp string, expiredAt time.Time) error
 }
 
 type pesertaRepository struct {
@@ -30,13 +33,13 @@ func (r *pesertaRepository) Create(peserta entity.Peserta) (entity.Peserta, erro
 
 func (r *pesertaRepository) FindAll() ([]entity.Peserta, error) {
 	var peserta []entity.Peserta
-	err := r.db.Find(&peserta).Error
+	err := r.db.Preload("Lokasi").Find(&peserta).Error
 	return peserta, err
 }
 
 func (r *pesertaRepository) FindByID(id uint) (entity.Peserta, error) {
 	var peserta entity.Peserta
-	err := r.db.First(&peserta, id).Error
+	err := r.db.Preload("Lokasi").First(&peserta, id).Error
 	return peserta, err
 }
 
@@ -53,4 +56,15 @@ func (r *pesertaRepository) Update(peserta entity.Peserta) (entity.Peserta, erro
 
 func (r *pesertaRepository) UpdateStatus(id uint, status string) error {
 	return r.db.Model(&entity.Peserta{}).Where("id = ?", id).Update("status", status).Error
+}
+
+func (r *pesertaRepository) AssignLocation(pesertaID uint, lokasiID uint) error {
+	return r.db.Model(&entity.Peserta{}).Where("id = ?", pesertaID).Update("lokasi_id", lokasiID).Error
+}
+
+func (r *pesertaRepository) UpdateOTP(id uint, otp string, expiredAt time.Time) error {
+	return r.db.Model(&entity.Peserta{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"otp":            otp,
+		"otp_expired_at": expiredAt,
+	}).Error
 }

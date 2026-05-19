@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"kkn-system/models/entity"
 
 	"gorm.io/gorm"
@@ -9,7 +10,8 @@ import (
 type PembayaranRepository interface {
 	Create(pembayaran entity.Pembayaran) (entity.Pembayaran, error)
 	FindByID(id uint) (entity.Pembayaran, error)
-	FindByPesertaID(pesertaID uint) ([]entity.Pembayaran, error)
+	FindByPesertaID(pesertaID uint) (entity.Pembayaran, error)
+	FindByExternalID(externalID string) (entity.Pembayaran, error)
 	UpdateStatus(externalID string, status string) error
 }
 
@@ -32,12 +34,25 @@ func (r *pembayaranRepository) FindByID(id uint) (entity.Pembayaran, error) {
 	return pembayaran, err
 }
 
-func (r *pembayaranRepository) FindByPesertaID(pesertaID uint) ([]entity.Pembayaran, error) {
-	var pembayaran []entity.Pembayaran
-	err := r.db.Where("peserta_id = ?", pesertaID).Find(&pembayaran).Error
+func (r *pembayaranRepository) FindByPesertaID(pesertaID uint) (entity.Pembayaran, error) {
+	var pembayaran entity.Pembayaran
+	err := r.db.Where("peserta_id = ?", pesertaID).Order("created_at desc").First(&pembayaran).Error
+	return pembayaran, err
+}
+
+func (r *pembayaranRepository) FindByExternalID(externalID string) (entity.Pembayaran, error) {
+	var pembayaran entity.Pembayaran
+	err := r.db.Where("external_id = ?", externalID).First(&pembayaran).Error
 	return pembayaran, err
 }
 
 func (r *pembayaranRepository) UpdateStatus(externalID string, status string) error {
-	return r.db.Model(&entity.Pembayaran{}).Where("external_id = ?", externalID).Update("status", status).Error
+	result := r.db.Model(&entity.Pembayaran{}).Where("external_id = ?", externalID).Update("status", status)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("data pembayaran dengan order_id tersebut tidak ditemukan")
+	}
+	return nil
 }

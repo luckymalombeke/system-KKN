@@ -1,39 +1,144 @@
 ### Test Ping
 GET http://localhost:8081/ping
 
+### ===============================
+### AUTHENTICATION (PASSWORDLESS)
+### ===============================
+
+### 1. Request OTP (dikirim ke email peserta; OTP tidak ada di response)
+# Lokal tanpa SMTP: set OTP_DEV_LOG=true di .env lalu cek log server
+POST http://localhost:8081/api/v1/auth/request-otp
+Content-Type: application/json
+
+{
+    "nim": "20260023222"
+}
+
+### 2. Verify OTP (Login & Dapatkan Token)
+POST http://localhost:8081/api/v1/auth/verify-otp
+Content-Type: application/json
+
+{
+    "nim": "20260023222",
+    "otp": "GANTI_DENGAN_OTP_YANG_DIDAPAT"
+}
+
+> {% client.global.set("mhs_token", response.body.token); %}
+
+### ===============================
+### PESERTA (MAHASISWA)
+### ===============================
+
 ### Register Peserta Baru
 POST http://localhost:8081/api/v1/peserta/register
 Content-Type: application/json
 
 {
-    "nama": " Lucky Malombeke",
-    "email": "lucky@example.com",
-    "nim": "2026001",
+    "nama": " Sharon,Georgina Mailangkay",
+    "email": "SharonMailangkay@gmail.com",
+    "nim": "20260023222",
     "prodi": "Teknik Informatika"
 }
 
-### Get Semua Peserta
-GET http://localhost:8081/api/v1/peserta/
+### ===============================
+### ADMIN APIs
+### ===============================
 
-### Get Peserta By ID
-GET http://localhost:8081/api/v1/peserta/1
-
-### Update Status Peserta (Admin)
-PATCH http://localhost:8081/api/v1/peserta/1/status
+### Admin Login
+POST http://localhost:8081/api/v1/auth/admin-login
 Content-Type: application/json
+
+{
+    "email": "admin@kkn.ac.id",
+    "password": "admin123"
+}
+
+> {% client.global.set("admin_token", response.body.token); %}
+
+### Get Semua Peserta (Admin Only)
+GET http://localhost:8081/api/v1/admin/peserta
+Authorization: Bearer {{admin_token}}
+
+### Get Peserta By ID (Admin Only)
+GET http://localhost:8081/api/v1/admin/peserta/3
+Authorization: Bearer {{admin_token}}
+
+### Update Status Peserta (Admin Only)
+PATCH http://localhost:8081/api/v1/admin/peserta/3/status
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
 
 {
     "status": "approved"
 }
 
-### Buat Invoice Pembayaran
-POST http://localhost:8081/api/v1/pembayaran/invoice
+### Tambah Lokasi KKN (Admin Only)
+POST http://localhost:8081/api/v1/admin/lokasi/
 Content-Type: application/json
+Authorization: Bearer {{admin_token}}
 
 {
-    "peserta_id": 1,
+    "nama_desa": "Maju Jaya",
+    "kecamatan": "Makmur",
+    "kuota": 20
+}
+
+### Lihat Semua Lokasi (Admin Only)
+GET http://localhost:8081/api/v1/admin/lokasi/
+Authorization: Bearer {{admin_token}}
+
+### Plotting Mahasiswa ke Lokasi (Admin Only)
+PATCH http://localhost:8081/api/v1/admin/peserta/1/lokasi
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+    "lokasi_id": 1
+}
+
+### ===============================
+### MAHASISWA APIs (Membutuhkan Token Login OTP)
+### ===============================
+
+### Profil Mahasiswa (dari JWT)
+GET http://localhost:8081/api/v1/mahasiswa/profile
+Authorization: Bearer {{mhs_token}}
+
+### Buat Invoice Pembayaran (peserta_id dari JWT)
+POST http://localhost:8081/api/v1/mahasiswa/pembayaran/invoice
+Content-Type: application/json
+Authorization: Bearer {{mhs_token}}
+
+{
     "amount": 500000
 }
 
-### Cek Status Pembayaran
-GET http://localhost:8081/api/v1/pembayaran/1
+### Cek Status Pembayaran (milik user yang login)
+GET http://localhost:8081/api/v1/mahasiswa/pembayaran
+Authorization: Bearer {{mhs_token}}
+
+### Lihat Notifikasi (milik user yang login)
+GET http://localhost:8081/api/v1/mahasiswa/notifikasi
+Authorization: Bearer {{mhs_token}}
+
+### Tandai Notifikasi Sebagai Dibaca (hanya milik user yang login)
+PATCH http://localhost:8081/api/v1/mahasiswa/notifikasi/1/read
+Authorization: Bearer {{mhs_token}}
+
+### ===============================
+### WEBHOOKS & PUBLIC APIs
+### ===============================
+
+### Webhook Notifikasi Midtrans (payload lengkap + signature_key dari Midtrans)
+# Untuk simulasi lokal: set MIDTRANS_SKIP_SIGNATURE_VERIFY=true di .env
+POST http://localhost:8081/api/v1/pembayaran/notification
+Content-Type: application/json
+
+{
+    "order_id": "INV-GANTI_DENGAN_ORDER_ID_ANDA",
+    "status_code": "200",
+    "gross_amount": "500000.00",
+    "transaction_status": "settlement",
+    "fraud_status": "accept",
+    "signature_key": "GANTI_DENGAN_SIGNATURE_KEY_DARI_MIDTRANS"
+}

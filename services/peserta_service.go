@@ -4,6 +4,7 @@ import (
 	"errors"
 	"kkn-system/models/entity"
 	"kkn-system/repositories"
+	"strings"
 )
 
 type PesertaService interface {
@@ -11,6 +12,7 @@ type PesertaService interface {
 	GetAllPeserta() ([]entity.Peserta, error)
 	GetPesertaByID(id uint) (entity.Peserta, error)
 	UpdateStatus(id uint, status string) error
+	AssignLocation(pesertaID uint, lokasiID uint) error
 }
 
 type pesertaService struct {
@@ -22,6 +24,9 @@ func NewPesertaService(repo repositories.PesertaRepository) PesertaService {
 }
 
 func (s *pesertaService) DaftarKKN(peserta entity.Peserta) (entity.Peserta, error) {
+	peserta.NIM = strings.TrimSpace(peserta.NIM)
+	peserta.Email = strings.TrimSpace(peserta.Email)
+
 	// Business Logic: Check if NIM already exists
 	existing, _ := s.repo.FindByNIM(peserta.NIM)
 	if existing.ID != 0 {
@@ -48,4 +53,8 @@ func (s *pesertaService) UpdateStatus(id uint, status string) error {
 	}
 
 	return s.repo.UpdateStatus(id, status)
+}
+
+func (s *pesertaService) AssignLocation(pesertaID uint, lokasiID uint) error {
+	return s.repo.AssignLocation(pesertaID, lokasiID)
 }
