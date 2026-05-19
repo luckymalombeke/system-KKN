@@ -22,5 +22,7 @@ Sistem manajemen administrasi KKN (Kuliah Kerja Nyata) berbasis Go (Golang) deng
 ## Installation
 1. Clone repository
 2. Jalankan `go mod tidy`
-3. Konfigurasi `.env`
-4. Jalankan `go run cmd/api/main.go`
+3. Salin `.env.example` ke `.env`, isi `JWT_SECRET` (min. 32 karakter acak) dan kredensial database
+4. Salin `frontend/.env.example` ke `frontend/.env` (sesuaikan `VITE_API_URL` jika perlu)
+5. Backend: `go run cmd/api/main.go` (default port **8081**)
+6. Frontend: `cd frontend && npm install && npm run dev`

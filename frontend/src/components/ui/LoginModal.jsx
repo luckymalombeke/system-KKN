@@ -172,7 +172,7 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess, defaultView = 'login' }) 
               ? 'Isi data diri Anda. Setelah itu login dengan NIM dan OTP.'
               : loginStep === 'input-nim'
                 ? 'Masukkan NIM yang sudah terdaftar.'
-                : `Kode OTP untuk NIM ${nim} dikirim (lihat terminal backend saat development).`}
+                : `Kode OTP untuk NIM ${nim} telah dikirim ke email terdaftar.`}
           </p>
         </div>
 

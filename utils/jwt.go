@@ -2,19 +2,42 @@ package utils
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
+const minJWTSecretLen = 32
+
+var weakJWTSecrets = map[string]struct{}{
+	"secret": {}, "jwt_secret": {}, "changeme": {}, "password": {},
+	"123456": {}, "your-secret-key": {}, "kkn-secret": {},
+}
+
 var jwtSecret []byte
+
+// ValidateJWTSecret menolak nilai default/lemah agar token tidak mudah dipalsukan.
+func ValidateJWTSecret(secret string) error {
+	secret = strings.TrimSpace(secret)
+	if secret == "" {
+		return errors.New("JWT_SECRET wajib diisi di file .env (min. 32 karakter acak)")
+	}
+	if len(secret) < minJWTSecretLen {
+		return errors.New("JWT_SECRET terlalu pendek (minimal 32 karakter)")
+	}
+	if _, weak := weakJWTSecrets[strings.ToLower(secret)]; weak {
+		return errors.New("JWT_SECRET tidak boleh memakai nilai default; gunakan string acak yang kuat")
+	}
+	return nil
+}
 
 // InitJWTSecret mengatur secret dari environment (dipanggil saat startup).
 func InitJWTSecret(secret string) error {
-	if secret == "" {
-		return errors.New("JWT_SECRET tidak boleh kosong")
+	if err := ValidateJWTSecret(secret); err != nil {
+		return err
 	}
-	jwtSecret = []byte(secret)
+	jwtSecret = []byte(strings.TrimSpace(secret))
 	return nil
 }
 
